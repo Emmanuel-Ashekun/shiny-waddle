@@ -1,0 +1,11 @@
+---
+- name: Install keadm (KubeEdge installer)
+  shell: |
+    curl -L https://github.com/kubeedge/kubeedge/releases/download/v{{ kubeedge_version }}/keadm-v{{ kubeedge_version }}-linux-amd64.tar.gz -o /tmp/keadm.tgz
+    tar -C /usr/local -xzf /tmp/keadm.tgz
+  args: { creates: /usr/local/keadm }
+
+- name: Join edge to CloudCore
+  shell: |
+    /usr/local/keadm/keadm join --cloudcore-ipport {{ cloudcore_ip }}:10000 --token {{ hostvars['central']['kubeedge_token'] }}
+  args: { creates: /etc/kubeedge/config/edgecore.yaml }

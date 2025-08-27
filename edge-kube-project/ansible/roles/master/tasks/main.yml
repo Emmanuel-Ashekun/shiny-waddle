@@ -1,0 +1,33 @@
+---
+- name: Install K3s (single-node control plane)
+  shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} sh -
+  args: { creates: /usr/local/bin/k3s }
+
+- name: Wait for K3s to be ready
+  shell: kubectl get nodes
+  register: k3s_nodes
+  retries: 20
+  delay: 6
+  until: k3s_nodes.rc == 0
+
+- name: Install keadm (KubeEdge installer)
+  shell: |
+    curl -L https://github.com/kubeedge/kubeedge/releases/download/v{{ kubeedge_version }}/keadm-v{{ kubeedge_version }}-linux-amd64.tar.gz -o /tmp/keadm.tgz
+    tar -C /usr/local -xzf /tmp/keadm.tgz
+  args: { creates: /usr/local/keadm }
+
+- name: Initialize CloudCore
+  shell: |
+    /usr/local/keadm/keadm init --kube-config /etc/rancher/k3s/k3s.yaml --advertise-address {{ cloudcore_ip }}
+  args: { creates: /etc/kubeedge/config/cloudcore.yaml }
+
+- name: Get KubeEdge join token
+  shell: /usr/local/keadm/keadm gettoken
+  register: edge_token
+  changed_when: false
+
+- name: Set token fact for group
+  set_fact:
+    kubeedge_token: "{{ edge_token.stdout | trim }}"
+  cacheable: yes

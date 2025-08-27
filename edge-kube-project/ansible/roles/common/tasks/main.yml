@@ -1,0 +1,29 @@
+---
+- name: Update apt cache
+  apt: update_cache=yes force_apt_get=yes cache_valid_time=600
+
+- name: Install base packages
+  apt:
+    name:
+      - curl
+      - wget
+      - ca-certificates
+      - apt-transport-https
+      - gnupg
+    state: present
+
+- name: Install containerd
+  apt:
+    name: containerd
+    state: present
+
+- name: Ensure containerd enabled
+  systemd:
+    name: containerd
+    state: started
+    enabled: yes
+
+- name: Disable swap (required by k8s)
+  command: swapoff -a
+  when: ansible_swaptotal_mb | default(0) | int > 0
+  changed_when: false

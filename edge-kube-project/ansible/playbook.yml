@@ -1,0 +1,14 @@
+---
+- name: Setup central master (K3s + CloudCore)
+  hosts: central
+  become: yes
+  roles:
+    - role: common
+    - role: master
+
+- name: Setup edges (EdgeCore join)
+  hosts: edges
+  become: yes
+  roles:
+    - role: common
+    - role: edge
